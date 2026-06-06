@@ -1,0 +1,182 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account schema representing an SMM reseller profile",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "email": { "type": "string" },
+        "balance": { "type": "number" },
+        "totalSpent": { "type": "number" },
+        "totalOrders": { "type": "number" },
+        "apiKey": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "status": { "type": "string", "enum": ["active", "banned"] },
+        "referralCode": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["username", "email", "balance", "totalSpent", "totalOrders", "apiKey", "role", "status", "referralCode", "createdAt"]
+    },
+    "Service": {
+      "title": "SMM Service",
+      "description": "Available SMM service with category and sizing details",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "type": { "type": "string" },
+        "description": { "type": "string" },
+        "rate": { "type": "number" },
+        "minOrder": { "type": "number" },
+        "maxOrder": { "type": "number" },
+        "providerId": { "type": "string" },
+        "providerServiceId": { "type": "string" },
+        "refill": { "type": "boolean" },
+        "refillDays": { "type": "number" },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "avgSpeed": { "type": "string" }
+      },
+      "required": ["name", "category", "type", "description", "rate", "minOrder", "maxOrder", "providerId", "providerServiceId", "refill", "refillDays", "status", "avgSpeed"]
+    },
+    "Order": {
+      "title": "SMM Order",
+      "description": "Reseller order details and progress tracking",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "serviceId": { "type": "string" },
+        "serviceName": { "type": "string" },
+        "link": { "type": "string" },
+        "quantity": { "type": "number" },
+        "startCount": { "type": "number" },
+        "remains": { "type": "number" },
+        "charge": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "processing", "in_progress", "completed", "partial", "canceled", "refunded"] },
+        "providerOrderId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "serviceId", "serviceName", "link", "quantity", "startCount", "remains", "charge", "status", "createdAt", "updatedAt"]
+    },
+    "Provider": {
+      "title": "Downstream Gateway Provider",
+      "description": "Provider API credentials and endpoint",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "apiUrl": { "type": "string" },
+        "apiKey": { "type": "string" },
+        "balance": { "type": "number" },
+        "status": { "type": "string", "enum": ["active", "inactive"] }
+      },
+      "required": ["name", "apiUrl", "apiKey", "balance", "status"]
+    },
+    "Transaction": {
+      "title": "Financial Transaction",
+      "description": "Funds logs and manual approvals history",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["deposit", "spent", "refund", "bonus", "deduction"] },
+        "amount": { "type": "number" },
+        "method": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "completed", "failed", "canceled"] },
+        "reference": { "type": "string" },
+        "note": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "type", "amount", "method", "status", "createdAt"]
+    },
+    "Ticket": {
+      "title": "Support Ticket",
+      "description": "Customer support interaction context",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "subject": { "type": "string" },
+        "category": { "type": "string" },
+        "priority": { "type": "string", "enum": ["low", "medium", "high", "urgent"] },
+        "status": { "type": "string", "enum": ["open", "pending", "answered", "closed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "username", "subject", "category", "priority", "status", "createdAt"]
+    },
+    "Message": {
+      "title": "Ticket Chat Message",
+      "description": "Individual message inside a support ticket chat",
+      "type": "object",
+      "properties": {
+        "ticketId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "isAdmin": { "type": "boolean" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ticketId", "senderId", "isAdmin", "message", "createdAt"]
+    },
+    "Coupon": {
+      "title": "Config Coupon",
+      "description": "Balance coupon codes",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string" },
+        "type": { "type": "string", "enum": ["fixed", "percent"] },
+        "value": { "type": "number" },
+        "maxUses": { "type": "number" },
+        "usedCount": { "type": "number" },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["active", "inactive", "expired"] }
+      },
+      "required": ["code", "type", "value", "maxUses", "usedCount", "expiresAt", "status"]
+    },
+    "Settings": {
+      "title": "System Settings",
+      "description": "Generic system configuration",
+      "type": "object",
+      "properties": {
+        "value": { "type": "string" }
+      },
+      "required": ["value"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "#/entities/User",
+      "description": "SMM panel registered users profiles"
+    },
+    "services/{serviceId}": {
+      "schema": "#/entities/Service",
+      "description": "SMM cataloged services list"
+    },
+    "orders/{orderId}": {
+      "schema": "#/entities/Order",
+      "description": "Customer order workflows"
+    },
+    "providers/{providerId}": {
+      "schema": "#/entities/Provider",
+      "description": "3rd party downstream resellers providers list"
+    },
+    "transactions/{txnId}": {
+      "schema": "#/entities/Transaction",
+      "description": "Financial operations entries"
+    },
+    "tickets/{ticketId}": {
+      "schema": "#/entities/Ticket",
+      "description": "Customer support request threads"
+    },
+    "messages/{messageId}": {
+      "schema": "#/entities/Message",
+      "description": "Support request communication log messages"
+    },
+    "coupons/{couponId}": {
+      "schema": "#/entities/Coupon",
+      "description": "Active/expired discount and balance coupons codes"
+    },
+    "settings/{key}": {
+      "schema": "#/entities/Settings",
+      "description": "System-wide settings"
+    }
+  }
+}

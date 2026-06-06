@@ -1,0 +1,120 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Custom global helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isUserAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'cuahangtienloituanhue@gmail.com' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+
+    // 1. Users collection
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isUserAdmin());
+      
+      allow create: if isSignedIn() && (request.auth.uid == userId) && 
+        (incoming().role == 'user' || (incoming().role == 'admin' && request.auth.token.email == 'cuahangtienloituanhue@gmail.com')) && 
+        incoming().balance == 0 && 
+        incoming().totalSpent == 0 && 
+        incoming().totalOrders == 0 && 
+        incoming().status == 'active' &&
+        incoming().email == request.auth.token.email;
+
+      allow update: if isUserAdmin() || (
+        isSignedIn() && (request.auth.uid == userId) && 
+        incoming().balance == existing().balance &&
+        incoming().totalSpent == existing().totalSpent &&
+        incoming().totalOrders == existing().totalOrders &&
+        incoming().role == existing().role &&
+        incoming().status == existing().status &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['username', 'apiKey', 'referralCode'])
+      );
+      
+      allow delete: if isUserAdmin();
+    }
+
+    // 2. Services collection
+    match /services/{serviceId} {
+      allow read: if isSignedIn();
+      allow write: if isUserAdmin();
+    }
+
+    // 3. Orders collection
+    match /orders/{orderId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isUserAdmin());
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isUserAdmin();
+    }
+
+    // 4. Providers collection (contains private API keys - restricted to admin)
+    match /providers/{providerId} {
+      allow read, write: if isUserAdmin();
+    }
+
+    // 5. Transactions collection
+    match /transactions/{txnId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isUserAdmin());
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid && incoming().status == 'pending';
+      allow update, delete: if isUserAdmin();
+    }
+
+    // 6. Tickets collection
+    match /tickets/{ticketId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isUserAdmin());
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isUserAdmin() || (
+        isSignedIn() && resource.data.userId == request.auth.uid &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['status']) &&
+        incoming().status == 'closed'
+      );
+      allow delete: if isUserAdmin();
+    }
+
+    // 7. Messages collection
+    match /messages/{messageId} {
+      allow read: if isSignedIn() && (
+        isUserAdmin() || 
+        get(/databases/$(database)/documents/tickets/$(resource.data.ticketId)).data.userId == request.auth.uid
+      );
+      allow create: if isSignedIn() && incoming().senderId == request.auth.uid && (
+        incoming().isAdmin == false || isUserAdmin()
+      );
+      allow update, delete: if isUserAdmin();
+    }
+
+    // 8. Coupons collection
+    match /coupons/{couponId} {
+      allow read: if isSignedIn();
+      allow write: if isUserAdmin();
+    }
+
+    // 9. Settings collection
+    match /settings/{key} {
+      allow read: if isSignedIn();
+      allow write: if isUserAdmin();
+    }
+  }
+}
